@@ -2,10 +2,11 @@
 #include <WiFi.h>
 #include "esp_http_server.h"
 
+// ✅ WiFi configuration
 const char* ssid = "allen";
 const char* password = "allen19941029";
 
-// ✅ GPIO 配置
+// ✅ GPIO configuration 
 #define PWDN_GPIO_NUM     -1
 #define RESET_GPIO_NUM    -1
 #define XCLK_GPIO_NUM     15
@@ -25,6 +26,7 @@ const char* password = "allen19941029";
 
 httpd_handle_t stream_httpd = NULL;
 
+// 📸 Initialize the camera configuration 
 void initCamera() {
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -46,13 +48,13 @@ void initCamera() {
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
 
-  config.xclk_freq_hz = 20000000;
-  config.pixel_format = PIXFORMAT_GRAYSCALE;  // GRAYSCALE
+  config.xclk_freq_hz = 20000000;  // Lower clock frequency to avoid unstable DMA 
+  config.pixel_format = PIXFORMAT_GRAYSCALE;  // Grayscale image 
 
-  // config.frame_size = FRAMESIZE_96X96;  // 小图节省资源
-  config.frame_size = FRAMESIZE_QVGA;
-  config.jpeg_quality = 12;
-  config.fb_count = 1;
+  // config.frame_size = FRAMESIZE_96X96;  // Small resolution to save resources 
+  config.frame_size = FRAMESIZE_QVGA;       // Use QVGA (320x240) resolution
+  config.jpeg_quality = 12;                 // JPEG quality (0-63), lower is better 
+  config.fb_count = 1;                      // Use single framebuffer 
 
   Serial.println("🔧 Starting camera init...");
   esp_err_t err = esp_camera_init(&config);
@@ -63,23 +65,24 @@ void initCamera() {
   Serial.println("✅ Camera init success!");
 }
 
-// 📡 MJPEG 视频流
+// 📡 MJPEG video stream 
 static esp_err_t stream_handler(httpd_req_t *req) {
   camera_fb_t *fb = NULL;
   esp_err_t res = ESP_OK;
   char part_buf[64];
 
+  // Set response type as multipart MJPEG
   res = httpd_resp_set_type(req, "multipart/x-mixed-replace; boundary=frame");
   if (res != ESP_OK) return res;
 
   while (true) {
-    fb = esp_camera_fb_get();
+    fb = esp_camera_fb_get();  // Capture a frame
     if (!fb) {
       Serial.println("❌ Camera capture failed");
       return ESP_FAIL;
     }
 
-    // ✨ 手动将 GRAYSCALE 转为 JPEG
+    // ✨ Manually convert GRAYSCALE to JPEG
     uint8_t *jpg_buf = NULL;
     size_t jpg_len = 0;
     if (!frame2jpg(fb, 80, &jpg_buf, &jpg_len)) {
@@ -88,21 +91,23 @@ static esp_err_t stream_handler(httpd_req_t *req) {
       continue;
     }
 
+    // Send multipart JPEG headers and data
     snprintf(part_buf, sizeof(part_buf),
              "--frame\r\nContent-Type: image/jpeg\r\nContent-Length: %u\r\n\r\n", (uint32_t)jpg_len);
     res = httpd_resp_send_chunk(req, part_buf, strlen(part_buf));
     res = httpd_resp_send_chunk(req, (const char *)jpg_buf, jpg_len);
     res = httpd_resp_send_chunk(req, "\r\n", 2);
 
-    esp_camera_fb_return(fb);
-    free(jpg_buf);  // ⚠️ 释放手动分配的 JPEG 缓冲
+    esp_camera_fb_return(fb);    // Return frame buffer to camera driver
+    free(jpg_buf);               // ⚠️ Free manually allocated JPEG buffer (释放手动分配的 JPEG 缓冲)
 
-    if (res != ESP_OK) break;
+    if (res != ESP_OK) break;   // Break the loop if client disconnects or error occurs
   }
 
   return res;
 }
 
+// 🌍 Start HTTP stream server 
 void startCameraServer() {
   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
   config.server_port = 80;
@@ -129,6 +134,7 @@ void setup() {
 
   initCamera();
 
+  // 🚀 Connect to WiFi
   WiFi.begin(ssid, password);
   Serial.print("🔌 Connecting to WiFi");
   while (WiFi.status() != WL_CONNECTED) {
@@ -140,12 +146,12 @@ void setup() {
   Serial.print("📶 IP address: ");
   Serial.println(WiFi.localIP());
 
-  startCameraServer();
+  startCameraServer();  // Start MJPEG server
   Serial.println("📷 Camera stream ready!");
   Serial.print("👉 Visit: http://");
   Serial.println(WiFi.localIP());
 }
 
 void loop() {
-  delay(500);  // 不用循环拍照
+  delay(500);  // Nothing to do in loop
 }
