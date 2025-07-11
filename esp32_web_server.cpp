@@ -1,12 +1,14 @@
 #include <WiFi.h>
 #include <WebServer.h>
 
+// WiFi credentials
 const char* ssid = "WIFI-4AA4";
 const char* password = "comedy4917equal";
 
+// Create a web server on port 80
 WebServer server(80);
 
-// 登录表单页面 HTML
+// Login form HTML page
 const char* loginPage = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -24,29 +26,33 @@ const char* loginPage = R"rawliteral(
 </html>
 )rawliteral";
 
-// 处理根路径（显示登录表单）
+// Handle root path — displays the login form
 void handleRoot() {
   server.send(200, "text/html", loginPage);
 }
 
-// 处理表单提交
+// Handle form submission (POST request to /login)
 void handleLogin() {
   if (server.method() == HTTP_POST) {
     String username = server.arg("username");
     String password = server.arg("password");
 
+    // Simple hardcoded authentication
     if (username == "admin" && password == "1234") {
       server.send(200, "text/html", "<h2>Login success! 🎉</h2>");
     } else {
       server.send(200, "text/html", "<h2>Login failed ❌</h2><a href='/'>Try again</a>");
     }
   } else {
+    // Reject methods other than POST
     server.send(405, "text/plain", "Method Not Allowed");
   }
 }
 
 void setup() {
   Serial.begin(115200);
+
+  // Connect to WiFi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -57,13 +63,14 @@ void setup() {
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  server.on("/", handleRoot);
-  server.on("/login", handleLogin);
+  // Register routes
+  server.on("/", handleRoot);       // Home page
+  server.on("/login", handleLogin); // Login form submission
 
-  server.begin();
+  server.begin(); // Start the web server
   Serial.println("Web server started.");
 }
 
 void loop() {
-  server.handleClient();
+  server.handleClient(); // Handle incoming HTTP requests
 }
