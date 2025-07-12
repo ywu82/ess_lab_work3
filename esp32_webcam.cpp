@@ -99,7 +99,7 @@ static esp_err_t stream_handler(httpd_req_t *req) {
     res = httpd_resp_send_chunk(req, "\r\n", 2);
 
     esp_camera_fb_return(fb);    // Return frame buffer to camera driver
-    free(jpg_buf);               // ⚠️ Free manually allocated JPEG buffer (释放手动分配的 JPEG 缓冲)
+    free(jpg_buf);               // ⚠️ Free manually allocated JPEG buffer
 
     if (res != ESP_OK) break;   // Break the loop if client disconnects or error occurs
   }
