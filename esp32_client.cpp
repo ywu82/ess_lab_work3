@@ -1,8 +1,8 @@
 #include <WiFi.h>
 
 // WiFi credentials
-const char* ssid = "WIFI-4AA4";
-const char* password = "comedy4917equal";
+const char* ssid = "";
+const char* password = "";
 
 // Server address and port
 const char* host = "10.0.0.161";   // Target server IP
