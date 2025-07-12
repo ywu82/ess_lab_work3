@@ -3,8 +3,8 @@
 #include "esp_http_server.h"
 
 // ✅ WiFi configuration
-const char* ssid = "allen";
-const char* password = "allen19941029";
+const char* ssid = "";
+const char* password = "";
 
 // ✅ GPIO configuration 
 #define PWDN_GPIO_NUM     -1
