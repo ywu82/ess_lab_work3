@@ -23,10 +23,13 @@ This repository contains the source code used in Lab Work 3 of INCS 810 Embedded
   Demonstrates how the ESP32 can be used with its onboard camera module to stream real-time video over a local network through a web interface.
 
 ## 📁 Folder Structure
+
+```bash
 ├── esp32_client.cpp # ESP32 as client
 ├── esp32_web_server.cpp # ESP32 as web server
 ├── esp32_webcam.cpp # ESP32 webcam streaming
 └── pc_server.py # PC acting as server
+```
 
 
 ## 📌 Notes
